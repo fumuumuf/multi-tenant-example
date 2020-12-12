@@ -1,0 +1,40 @@
+version: '2.3'
+services:
+  postgres:
+    image: postgres:12.2-alpine
+    volumes:
+    - ./postgres/data:/var/lib/postgresql/data
+    container_name: ${PROJECT_NAME}-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=djangodb
+    ports:
+      - ${DB_CONTAINER_PORT}:5432
+
+  django:
+    build:
+      context: ./django
+    image: multi-tenant-django
+    container_name: ${PROJECT_NAME}-django
+    volumes:
+      - ./django/apps:/var/www/django
+    expose:
+      - ${DJANGO_CONTAINER_PORT}
+
+    env_file:
+      - .env
+    ports:
+      - ${DJANGO_CONTAINER_PORT}:8000
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=djangodb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=secret
+
+    env_file:
+      - .env
+    tty: true
+    depends_on:
+      - postgres
